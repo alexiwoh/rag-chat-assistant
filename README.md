@@ -26,6 +26,36 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 
 ---
 
+## 🧠 Model Setup
+
+This app uses the open-source **Mistral-7B-Instruct** model via `llama-cpp-python`.
+You can get the model one of two ways:
+
+### Option 1:
+
+1. Visit the model page on Hugging Face:  
+   👉 [TheBloke/Mistral-7B-Instruct-v0.1-GGUF](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF)
+
+2. Download the file:  
+   `mistral-7b-instruct-v0.1.Q4_K_M.gguf`
+
+3. Place the file inside the `app/models/` folder so it looks like this:
+
+<pre><code>```
+app/
+├── models/
+│   └── mistral-7b-instruct-v0.1.Q4_K_M.gguf
+```</code></pre>
+
+### Option 2:
+
+#### 📦 Download the Model (Automatically)
+```bash
+./download-model.sh
+```
+
+---
+
 ## 📦 Running the Project
 
 ```bash
