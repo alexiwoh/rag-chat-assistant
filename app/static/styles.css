@@ -78,3 +78,17 @@ h1 {
   font-size: 1rem;
   cursor: pointer;
 }
+
+.sources {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 4px;
+  padding-left: 10px;
+}
+.sources ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.sources li {
+  list-style-type: disc;
+}

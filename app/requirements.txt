@@ -1,7 +1,11 @@
-
+chromadb
 fastapi
-uvicorn
+jinja2
 langchain
 langchain-community
-jinja2
+langchain-huggingface
+pdfminer.six
+pymupdf
 python-multipart
+sentence-transformers
+uvicorn

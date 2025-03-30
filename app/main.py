@@ -2,29 +2,25 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from langchain.agents import initialize_agent, AgentType
+
 from langchain_community.chat_models.fake import FakeListChatModel
-from langchain.tools import tool
+from langchain.chains import RetrievalQA
+
+from embed_documents import embed_documents
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+db = embed_documents()
 
-@tool
-def get_greeting(name: str) -> str:
-    """Returns a greeting message for the given name."""
-    return f"Hey {name}, welcome to our LangChain agent!"
+retriever = db.as_retriever()
 
-
-llm = FakeListChatModel(responses=["This is a mock response."])
-tools = [get_greeting]
-
-agent = initialize_agent(
-    tools=tools,
+llm = FakeListChatModel(responses=["This is a mock RAG response."])
+qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
-    agent=AgentType.OPENAI_FUNCTIONS,
-    verbose=True,
+    retriever=retriever,
+    return_source_documents=True
 )
 
 chat_history = []
@@ -40,8 +36,18 @@ def serve_chat(request: Request):
 
 @app.post("/", response_class=HTMLResponse)
 def handle_chat(request: Request, query: str = Form(...)):
-    answer = agent.run(query)
-    chat_history.append({"user": query, "agent": answer})
+    result = qa_chain.invoke(query)
+
+    answer = result["result"]
+    sources = list(set(doc.metadata.get("source", "unknown") for doc in result["source_documents"]))
+
+    # Add to chat history
+    chat_history.append({
+        "user": query,
+        "agent": answer,
+        "sources": sources
+    })
+
     return templates.TemplateResponse("chat.html", {
         "request": request,
         "chat_history": chat_history
