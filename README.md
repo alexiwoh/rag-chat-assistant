@@ -21,42 +21,19 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [LangChain](https://www.langchain.com/)
 - [ChromaDB](https://www.trychroma.com/)
-- [Docker + Compose](https://docs.docker.com/compose/)
+- [Ollama](https://ollama.com/) – local LLM server
 - [Jinja2](https://jinja.palletsprojects.com/) + HTML/CSS for the chat UI
+- [Docker + Compose](https://docs.docker.com/compose/)
 
 ---
 
-## 🧠 Model Setup
+## 🧠 Model Setup (via Ollama)
 
-This app uses the open-source **Mistral-7B-Instruct** model via `llama-cpp-python`.
-You can get the model one of two ways:
-
-### Option 1:
-
-1. Visit the model page on Hugging Face:  
-   👉 [TheBloke/Mistral-7B-Instruct-v0.1-GGUF](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF)
-
-2. Download the file:  
-   `mistral-7b-instruct-v0.1.Q4_K_M.gguf`
-
-3. Place the file inside the `app/models/` folder so it looks like this:
-
-<pre><code>```
-app/
-├── models/
-│   └── mistral-7b-instruct-v0.1.Q4_K_M.gguf
-```</code></pre>
-
-### Option 2:
-
-#### 📦 Download the Model (Run the following in the terminal)
-```bash
-./app/download-model.sh
-```
+This app uses the **Mistral** model through [Ollama](https://ollama.com/), which handles model serving behind the scenes.
 
 ---
 
-## 📦 Running the Project
+## 📦 Running the Project in the Terminal
 
 ```bash
 ./start-app
@@ -64,7 +41,7 @@ app/
 
 ---
 
-## 📦 Stopping the Project
+## 📦 Stopping the Project in the Terminal
 
 ```bash
 ./stop-app
