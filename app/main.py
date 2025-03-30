@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from langchain_community.chat_models.fake import FakeListChatModel
+from langchain_community.llms import LlamaCpp
 from langchain.chains import RetrievalQA
 
 from embed_documents import embed_documents
@@ -16,7 +16,15 @@ db = embed_documents()
 
 retriever = db.as_retriever()
 
-llm = FakeListChatModel(responses=["This is a mock RAG response."])
+llm = LlamaCpp(
+    model_path="models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",
+    n_ctx=4096,
+    temperature=0.1,
+    max_tokens=512,
+    n_threads=6,  # Adjust based on your own CPU
+    verbose=True
+)
+
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=retriever,

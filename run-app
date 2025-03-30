@@ -3,6 +3,9 @@
 # Make sure stop-app is executable (harmless if already is)
 chmod +x ./stop-app 2>/dev/null
 
+# Download the model
+chmod +x ./app/download-model.sh && ./app/download-model.sh
+
 # Start docker-compose in the background
 docker-compose up --build &
 

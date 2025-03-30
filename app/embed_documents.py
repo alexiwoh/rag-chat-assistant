@@ -39,7 +39,7 @@ def embed_documents(
     print(f"📄 Loaded {len(all_docs)} documents from PDF files.")
 
     # 2. Split into chunks
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=64)
     split_docs = splitter.split_documents(all_docs)
     print(f"✂️ Split into {len(split_docs)} text chunks.")
 

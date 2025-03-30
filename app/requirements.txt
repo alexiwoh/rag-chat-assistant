@@ -4,6 +4,7 @@ jinja2
 langchain
 langchain-community
 langchain-huggingface
+llama-cpp-python==0.2.24
 pdfminer.six
 pymupdf
 python-multipart
