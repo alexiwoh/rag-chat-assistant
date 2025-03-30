@@ -49,9 +49,9 @@ app/
 
 ### Option 2:
 
-#### 📦 Download the Model (Automatically)
+#### 📦 Download the Model (Run the following in the terminal)
 ```bash
-./download-model.sh
+./app/download-model.sh
 ```
 
 ---
