@@ -30,3 +30,12 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 
 ```bash
 ./run-app
+```
+
+---
+
+## 📦 Stopping the Project
+
+```bash
+./stop-app
+```
