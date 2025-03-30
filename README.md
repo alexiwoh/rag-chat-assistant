@@ -59,7 +59,7 @@ app/
 ## 📦 Running the Project
 
 ```bash
-./run-app
+./start-app
 ```
 
 ---

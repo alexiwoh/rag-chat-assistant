@@ -1,4 +1,36 @@
 #!/bin/bash
 
-# Gracefully stop and remove the containers
+echo "🛑 Stopping Docker containers..."
 docker-compose down
+
+echo "🛑 Stopping all running Ollama models..."
+if ollama list &> /dev/null; then
+    ollama list | awk 'NR>1 {print $1}' | while read -r MODEL; do
+        echo "🛑 Stopping model: $MODEL"
+        ollama stop "$MODEL" 2>/dev/null
+    done
+    echo "✅ All Ollama models stopped."
+else
+    echo "ℹ️ No Ollama models to stop (none pulled yet)."
+fi
+
+echo "🛑 Checking for background 'ollama serve' process..."
+# Cross-platform: kill background processes started from the terminal
+OLLAMA_PIDS=$(pgrep -f "ollama serve")
+
+if [ -z "$OLLAMA_PIDS" ]; then
+  echo "✅ No terminal-launched Ollama processes found."
+else
+  for PID in $OLLAMA_PIDS; do
+    echo "🛑 Killing ollama serve (PID $PID)..."
+    kill "$PID" 2>/dev/null
+  done
+  echo "✅ Terminal-launched Ollama processes stopped."
+fi
+
+# Mac note
+OS_TYPE="$(uname -s)"
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+  echo "ℹ️ Ollama might still be running via the macOS menu bar."
+  echo "👉 To fully quit it, right-click the Ollama icon in your menu bar and select 'Quit Ollama'."
+fi

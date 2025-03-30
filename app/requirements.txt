@@ -1,12 +1,12 @@
-chromadb
-fastapi
-jinja2
-langchain
-langchain-community
-langchain-huggingface
-llama-cpp-python==0.2.24
-pdfminer.six
-pymupdf
-python-multipart
-sentence-transformers
-uvicorn
+chromadb                # Using Chroma as vector store
+fastapi                 # Web framework
+jinja2                  # HTML templating
+langchain               # Core LangChain framework
+langchain-community     # Includes PyMuPDFLoader, etc.
+langchain-huggingface   # For HuggingFaceEmbeddings (recently split out)
+langchain-ollama>=0.1.0 # The modern Ollama integration
+ollama                  # Python client to talk to the Ollama server
+pdfminer.six            # Used internally by PyMuPDF or other PDF tooling
+pymupdf                 # For PyMuPDFLoader (PDF loader)
+python-multipart        # Needed for `Form(...)` in FastAPI
+uvicorn                 # ASGI server

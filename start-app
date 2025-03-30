@@ -1,0 +1,86 @@
+#!/bin/bash
+
+set -e
+
+# Make sure stop-app is executable (harmless if already is)
+# Gracefully stop old containers
+chmod +x ./stop-app 2>/dev/null && ./stop-app 2>/dev/null
+
+# 🧠 Detect OS
+OS_TYPE="$(uname -s)"
+
+# 🧠 Check if Ollama is installed
+if ! command -v ollama &> /dev/null; then
+    echo "⚠️ Ollama is not installed."
+
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        echo "👉 Please install Ollama from https://ollama.com/download (drag the app to /Applications)"
+        exit 1
+    elif [[ "$OS_TYPE" == "Linux" ]]; then
+        echo "🔧 Installing Ollama for Linux..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "MSYS"* || "$OS_TYPE" == "CYGWIN"* ]]; then
+        echo "👉 Please install Ollama from https://ollama.com/download (run the .exe installer)"
+        exit 1
+    else
+        echo "❌ Unsupported OS: $OS_TYPE"
+        exit 1
+    fi
+fi
+
+# ✅ Start Ollama server if not running
+if ! pgrep -f "ollama serve" > /dev/null; then
+    echo "🧠 Starting Ollama server..."
+    nohup ollama serve > ollama.log 2>&1 &
+    OLLAMA_PID=$!
+
+    # Wait until Ollama API is reachable
+    echo "⏳ Waiting for Ollama at http://localhost:11434..."
+    until curl -s http://localhost:11434 > /dev/null; do
+        sleep 1
+        if ! ps -p $OLLAMA_PID > /dev/null; then
+            echo "❌ Ollama failed to start. Check ollama.log"
+            exit 1
+        fi
+    done
+
+    echo "✅ Ollama is running!"
+else
+    echo "✅ Ollama is already running."
+fi
+
+# ✅ Pull Mistral model if not already available
+if ! ollama list | grep -q "mistral"; then
+    echo "⬇️ Downloading Mistral model..."
+    ollama pull mistral
+fi
+
+# Start docker-compose in the background
+docker-compose up --build &
+
+# Get PID so we can track if it crashes
+DC_PID=$!
+
+# Wait until FastAPI is reachable
+echo "⏳ Waiting for http://localhost:8000 to be available..."
+until curl -s http://localhost:8000 > /dev/null; do
+  sleep 1
+  # Exit early if docker-compose crashed
+  if ! ps -p $DC_PID > /dev/null; then
+    echo "❌ Docker failed to start. Check logs above."
+    exit 1
+  fi
+done
+
+# When FastAPI is ready, open the browser
+echo "✅ FastAPI is running. Launching browser..."
+
+if command -v open > /dev/null; then
+  open http://localhost:8000         # macOS
+elif command -v xdg-open > /dev/null; then
+  xdg-open http://localhost:8000     # Linux
+elif command -v start > /dev/null; then
+  start http://localhost:8000        # Windows Git Bash
+else
+  echo "ℹ️ Please open your browser to http://localhost:8000"
+fi

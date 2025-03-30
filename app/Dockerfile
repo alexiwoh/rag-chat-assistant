@@ -3,16 +3,6 @@ FROM python:3.11
 
 WORKDIR /app
 
-# Install build tools
-RUN apt-get update && apt-get install -y \
-    cmake \
-    build-essential \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install llama-cpp-python==0.2.24
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
