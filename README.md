@@ -27,13 +27,20 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 
 ---
 
-## 🧠 Model Setup (via Ollama)
+## 💻 Requirements
 
-This app uses the **Mistral** model through [Ollama](https://ollama.com/), which handles model serving behind the scenes.
+Before running the app, make sure you have the following installed:
+
+- 🐳 [Docker](https://www.docker.com/products/docker-desktop)
+- 🦙 [Ollama](https://ollama.com/download) – for local LLM model inference
+
+Both are cross-platform and free to install.
 
 ---
 
-## 📦 Running the Project in the Terminal
+## 📦 Starting the App
+
+Once Docker and Ollama are installed and running, run teh following in the Terminal:
 
 ```bash
 ./start-app
@@ -41,7 +48,9 @@ This app uses the **Mistral** model through [Ollama](https://ollama.com/), which
 
 ---
 
-## 📦 Stopping the Project in the Terminal
+## 📦 Stopping the App
+
+Run the follwoing in the Terminal:
 
 ```bash
 ./stop-app
