@@ -2,6 +2,14 @@
 
 echo "🧹 Cleaning up rag-chat-assistant..."
 
+# Parse optional flags
+REBUILD=false
+for arg in "$@"; do
+  if [[ "$arg" == "--rebuild" ]]; then
+    REBUILD=true
+  fi
+done
+
 # Delete Chroma vector database
 CHROMA_DB_PATH="app/databases/chroma_db"
 if [ -d "$CHROMA_DB_PATH" ]; then
@@ -17,8 +25,16 @@ if [ -f "ollama.log" ]; then
     rm -f ollama.log
 fi
 
-# Stop and remove Docker containers, networks, etc.
+# Stop and clean up Docker
 echo "🛑 Stopping and cleaning Docker environment..."
 docker-compose down -v --remove-orphans
+
+# Optional: force rebuild of Docker image
+if [ "$REBUILD" = true ]; then
+    echo "♻️ Rebuilding Docker images without cache..."
+    docker-compose build --no-cache
+else
+    echo "ℹ️ Skipping Docker rebuild. Use --rebuild to force it."
+fi
 
 echo "✅ Cleanup complete."

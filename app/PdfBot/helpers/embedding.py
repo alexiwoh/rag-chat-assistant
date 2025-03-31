@@ -1,68 +1,80 @@
+import os
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-import os
 
 from ..constants.paths import DOCUMENTS_DEFAULT_DIRECTORY, CHROMA_DB_DEFAULT_DIRECTORY
 
 
-def embed_documents(
-        root_dir=DOCUMENTS_DEFAULT_DIRECTORY,
-        persist_directory=CHROMA_DB_DEFAULT_DIRECTORY
-):
+def find_all_pdfs(root_dir: str):
     """
-        Loads all PDF files from a directory (recursively), splits their text into chunks,
-        embeds the chunks using a Hugging Face model, and stores them in a Chroma vector database.
-
-        Args:
-            root_dir (str): Root folder where documents are stored. Can include nested folders.
-                            Default is 'documents'.
-            persist_directory (str): Path where the Chroma vector database should be stored.
-                                     Default is 'app/databases/chroma_db'.
-
-        Returns:
-            Chroma: A LangChain-compatible vector store instance, ready for similarity search.
+    Recursively finds all PDFs in a directory and loads them as LangChain documents.
+    Adds source name and page metadata for attribution.
     """
     all_docs = []
 
-    # 1. Recursively find all PDFs
     for root, _, files in os.walk(root_dir):
         for file in files:
             if file.endswith(".pdf"):
                 full_path = os.path.join(root, file)
                 loader = PyMuPDFLoader(full_path)
                 docs = loader.load()
+
                 for doc in docs:
                     doc.metadata["source"] = os.path.basename(doc.metadata.get("source", full_path))
                     doc.metadata["page"] = doc.metadata.get("page", None)
-                print(f"Loaded {len(docs)} docs from {full_path}")
+
+                print(f"📄 Loaded {len(docs)} docs from: {full_path}")
                 all_docs.extend(docs)
 
-    print(f"📄 Loaded {len(all_docs)} documents from all PDF files.")
+    print(f"✅ Total documents loaded: {len(all_docs)}")
+    return all_docs
 
-    # 2. Split into chunks
+
+def split_documents(documents, chunk_size=1024, chunk_overlap=256):
+    """
+    Splits documents into overlapping chunks using recursive character splitting.
+    """
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1024,
-        chunk_overlap=256,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
         separators=["\n\n", "\n", ".", " ", ""]
         # splitter tries preserving paragraphs, then lines, then sentences, then words, then characters
     )
-    split_docs = splitter.split_documents(all_docs)
-    print(f"✂️ Split into {len(split_docs)} text chunks.")
+    chunks = splitter.split_documents(documents)
+    print(f"✂️ Split into {len(chunks)} text chunks.")
+    return chunks
 
-    # 3. Embed & make vector db store
+
+def embed_and_store_documents(split_docs, persist_directory):
+    """
+    Embeds document chunks using a HuggingFace model and stores them in a Chroma vector DB.
+    """
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vectordb = Chroma.from_documents(
         documents=split_docs,
         embedding=embeddings,
         persist_directory=persist_directory
     )
+    print(f"🧠 Vector store created at: {persist_directory}")
+    return vectordb
 
-    print(f"✅ Vector store created at: {persist_directory}")
+
+def embed_documents(
+    root_dir=DOCUMENTS_DEFAULT_DIRECTORY,
+    persist_directory=CHROMA_DB_DEFAULT_DIRECTORY
+):
+    """
+    Full pipeline to load, split, embed, and persist documents into a vector store.
+    """
+    raw_docs = find_all_pdfs(root_dir)
+    split_docs = split_documents(raw_docs)
+    vectordb = embed_and_store_documents(split_docs, persist_directory)
     return vectordb
 
 
 def load_vector_store():
     db = embed_documents()
-    return db.as_retriever()
+    retriever = db.as_retriever(search_kwargs={"k": 4})
+    return retriever

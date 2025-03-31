@@ -1,0 +1,35 @@
+# Test GET to chat (renders HTML)
+GET http://127.0.0.1:8000/
+Accept: text/html
+
+###
+
+# Test POST to chat (valid form query)
+POST http://localhost:8000/
+Content-Type: application/x-www-form-urlencoded
+
+query=What are the positive impacts of AI?
+
+###
+
+# Test POST with empty query
+POST http://localhost:8000/
+Content-Type: application/x-www-form-urlencoded
+
+query=
+
+###
+
+# Test POST with same query to check caching
+POST http://localhost:8000/
+Content-Type: application/x-www-form-urlencoded
+
+query=What are the positive impacts of AI?
+
+###
+
+# Test invalid route (404)
+GET http://localhost:8000/does-not-exist
+Accept: application/json
+
+###

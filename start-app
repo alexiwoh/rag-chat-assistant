@@ -19,10 +19,10 @@ fi
 # Make sure stop-app is executable and stop old docker containers
 chmod +x ./stop-app 2>/dev/null && ./stop-app 2>/dev/null
 
-# 🧠 Detect OS
+# Detect the OS
 OS_TYPE="$(uname -s)"
 
-# 🧠 Check if Ollama is installed
+# Check if Ollama is installed
 if ! command -v ollama &> /dev/null; then
     echo "⚠️ Ollama is not installed."
 
@@ -41,7 +41,7 @@ if ! command -v ollama &> /dev/null; then
     fi
 fi
 
-# ✅ Start Ollama server if not running
+# Start Ollama server if not running
 if ! pgrep -f "ollama serve" > /dev/null; then
     echo "🧠 Starting Ollama server..."
     nohup ollama serve > ollama.log 2>&1 &
@@ -62,7 +62,7 @@ else
     echo "✅ Ollama is already running."
 fi
 
-# ✅ Pull Mistral model if not already available
+# Pull Mistral model if not already available
 if ! ollama list | grep -q "mistral"; then
     echo "⬇️ Downloading Mistral model..."
     ollama pull mistral

@@ -1,11 +1,9 @@
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from langchain.chains import RetrievalQA
-from starlette.concurrency import run_in_threadpool
 
-from .cache import get_cached_answer, set_cached_answer
-from .utils import sanitize_text
-from ..constants import MAX_INPUT_LENGTH
+from .cache import get_or_cache_qa_result
+from .utils import sanitize_text, build_source_strings, validate_and_sanitize_query
 
 templates = Jinja2Templates(directory="templates")
 chat_history = []
@@ -20,31 +18,11 @@ def get_chat_ui(request: Request, error: str = None):
 
 
 async def safe_run_qa(query: str, qa_chain: RetrievalQA) -> dict:
-    """
-    Sanitizes and validates input, runs inference, and returns structured result.
-    Raises ValueError for any validation or execution issues.
-    """
-    if not query.strip():
-        raise ValueError("⚠️ Query cannot be empty.")
-
-    query_clean = sanitize_text(query)
-
-    if len(query_clean) > MAX_INPUT_LENGTH:
-        raise ValueError(f"⚠️ Query too long. Please limit to {MAX_INPUT_LENGTH} characters.")
-
-    cached_result = get_cached_answer(query_clean)
-    if cached_result:
-        result = cached_result
-    else:
-        result = await run_in_threadpool(qa_chain.invoke, query_clean)
-        set_cached_answer(query_clean, result)
-
+    query_clean = validate_and_sanitize_query(query)
+    result = await get_or_cache_qa_result(query_clean, qa_chain)
     answer = result["result"]
-    sources = list({
-        f"{doc.metadata.get('source', 'unknown')}" +
-        (f" (page {doc.metadata['page']})" if doc.metadata.get('page') is not None else "")
-        for doc in result["source_documents"]
-    })
+
+    sources = build_source_strings(result["source_documents"])
     if not sources:
         answer += "\n\n⚠️ There were no supporting sources retrieved."
 
