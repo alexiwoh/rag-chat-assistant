@@ -38,7 +38,7 @@ Both are cross-platform and free to install.
 
 ---
 
-## 📦 Starting the App
+## 🚀 Starting the App
 
 Once Docker and Ollama are installed and running, run the following in the Terminal:
 
@@ -48,7 +48,7 @@ Once Docker and Ollama are installed and running, run the following in the Termi
 
 ---
 
-## 📦 Stopping the App
+## 🛑 Stopping the App
 
 Run the following in the Terminal:
 
@@ -58,7 +58,7 @@ Run the following in the Terminal:
 
 ---
 
-## 📦 Cleaning the App
+## 🧹 Cleaning the App
 
 Run the following in the Terminal:
 
