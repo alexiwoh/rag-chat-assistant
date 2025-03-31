@@ -54,3 +54,8 @@ def embed_documents(
     vectordb.persist()
     print(f"✅ Vector store created at: {persist_directory}")
     return vectordb
+
+
+def load_vector_store():
+    db = embed_documents()
+    return db.as_retriever()
