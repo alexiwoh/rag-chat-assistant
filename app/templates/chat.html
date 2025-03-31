@@ -14,6 +14,10 @@
 <div class="chat-container">
     <h1>🧠 LangChain RAG Chat Agent</h1>
 
+    {% if error %}
+        <div class="error-message">{{ error }}</div>
+    {% endif %}
+
     <div class="chat-box" id="chat-box">
         {% for exchange in chat_history %}
             <div class="chat-bubble user">

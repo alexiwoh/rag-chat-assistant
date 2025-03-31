@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from langchain.chains.llm import LLMChain
 
 from langchain_ollama import OllamaLLM
 from langchain.chains import RetrievalQA
+from starlette.concurrency import run_in_threadpool
 
-from PdfBot.helpers import embed_documents
 from PdfBot.constants import PROMPT_TEMPLATE_PDF_QA
+from PdfBot.helpers import embed_documents
+from PdfBot.helpers.utils import sanitize_text
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -50,20 +51,47 @@ def serve_chat(request: Request):
 
 
 @app.post("/", response_class=HTMLResponse)
-def handle_chat(request: Request, query: str = Form(...)):
-    result = qa_chain.invoke(query)
+async def handle_chat(request: Request, query: str = Form(...)):
+    try:
+        if not query.strip():
+            error_message = "⚠️ Query cannot be empty."
+            raise ValueError(error_message)
 
-    answer = result["result"]
-    sources = list(set(doc.metadata.get("source", "unknown") for doc in result["source_documents"]))
+        query_clean = sanitize_text(query)
 
-    # Add to chat history
-    chat_history.append({
-        "user": query,
-        "agent": answer,
-        "sources": sources
-    })
+        if len(query_clean) > 2000:
+            error_message = "⚠️ Query too long. Please limit to 2000 characters."
+            raise ValueError(error_message)
 
-    return templates.TemplateResponse("chat.html", {
-        "request": request,
-        "chat_history": chat_history
-    })
+        result = await run_in_threadpool(qa_chain.invoke, query_clean)
+
+        answer = result["result"]
+        sources = list(set(doc.metadata.get("source", "unknown") for doc in result["source_documents"]))
+
+        chat_history.append({
+            "user": query_clean,
+            "agent": answer,
+            "sources": sources
+        })
+
+        return templates.TemplateResponse("chat.html", {
+            "request": request,
+            "chat_history": chat_history
+        })
+
+    except ValueError as ve:
+        # Show validation errors in the UI
+        return templates.TemplateResponse("chat.html", {
+            "request": request,
+            "chat_history": chat_history,
+            "error": sanitize_text(str(ve))
+        })
+
+    except Exception as e:
+        # Catch-all for unexpected issues
+        print(f"❌ Error during QA inference: {e}")
+        return templates.TemplateResponse("chat.html", {
+            "request": request,
+            "chat_history": chat_history,
+            "error": f"Something went wrong: {sanitize_text(str(e))}"
+        })
