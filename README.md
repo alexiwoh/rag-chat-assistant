@@ -40,7 +40,7 @@ Both are cross-platform and free to install.
 
 ## 📦 Starting the App
 
-Once Docker and Ollama are installed and running, run teh following in the Terminal:
+Once Docker and Ollama are installed and running, run the following in the Terminal:
 
 ```bash
 ./start-app
