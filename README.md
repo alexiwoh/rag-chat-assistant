@@ -50,8 +50,18 @@ Once Docker and Ollama are installed and running, run the following in the Termi
 
 ## 📦 Stopping the App
 
-Run the follwoing in the Terminal:
+Run the following in the Terminal:
 
 ```bash
 ./stop-app
+```
+
+---
+
+## 📦 Cleaning the App
+
+Run the following in the Terminal:
+
+```bash
+./clean-app
 ```

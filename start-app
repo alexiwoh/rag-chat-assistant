@@ -16,7 +16,7 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Make sure stop-app is executable and stop old containers
+# Make sure stop-app is executable and stop old docker containers
 chmod +x ./stop-app 2>/dev/null && ./stop-app 2>/dev/null
 
 # 🧠 Detect OS

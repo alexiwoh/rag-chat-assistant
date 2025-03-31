@@ -33,6 +33,9 @@ def embed_documents(
                 full_path = os.path.join(root, file)
                 loader = PyMuPDFLoader(full_path)
                 docs = loader.load()
+                for doc in docs:
+                    doc.metadata["source"] = os.path.basename(doc.metadata.get("source", full_path))
+                    doc.metadata["page"] = doc.metadata.get("page", None)
                 print(f"Loaded {len(docs)} docs from {full_path}")
                 all_docs.extend(docs)
 

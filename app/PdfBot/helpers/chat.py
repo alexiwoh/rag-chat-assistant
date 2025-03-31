@@ -40,7 +40,13 @@ async def safe_run_qa(query: str, qa_chain: RetrievalQA) -> dict:
         set_cached_answer(query_clean, result)
 
     answer = result["result"]
-    sources = list(set(doc.metadata.get("source", "unknown") for doc in result["source_documents"]))
+    sources = list({
+        f"{doc.metadata.get('source', 'unknown')}" +
+        (f" (page {doc.metadata['page']})" if doc.metadata.get('page') is not None else "")
+        for doc in result["source_documents"]
+    })
+    if not sources:
+        answer += "\n\n⚠️ There were no supporting sources retrieved."
 
     return {
         "query": query_clean,

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "🧹 Cleaning up rag-chat-assistant..."
+
+# Delete Chroma vector database
+CHROMA_DB_PATH="app/databases/chroma_db"
+if [ -d "$CHROMA_DB_PATH" ]; then
+    echo "🗑 Removing vector store at $CHROMA_DB_PATH"
+    rm -rf "$CHROMA_DB_PATH"
+else
+    echo "✅ No Chroma DB found, skipping."
+fi
+
+# Delete Ollama model logs
+if [ -f "ollama.log" ]; then
+    echo "🗑 Removing Ollama log"
+    rm -f ollama.log
+fi
+
+# Stop and remove Docker containers, networks, etc.
+echo "🛑 Stopping and cleaning Docker environment..."
+docker-compose down -v --remove-orphans
+
+echo "✅ Cleanup complete."
