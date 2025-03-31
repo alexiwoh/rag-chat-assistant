@@ -2,8 +2,21 @@
 
 set -e
 
-# Make sure stop-app is executable (harmless if already is)
-# Gracefully stop old containers
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker is not installed."
+    echo "👉 Please install Docker: https://www.docker.com/products/docker-desktop"
+    exit 1
+fi
+
+# Check if Docker daemon is running
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Docker daemon is not running."
+    echo "👉 Please start Docker Desktop before continuing."
+    exit 1
+fi
+
+# Make sure stop-app is executable and stop old containers
 chmod +x ./stop-app 2>/dev/null && ./stop-app 2>/dev/null
 
 # 🧠 Detect OS

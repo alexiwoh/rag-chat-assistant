@@ -34,11 +34,9 @@ def embed_documents(
                 loader = PyMuPDFLoader(full_path)
                 docs = loader.load()
                 print(f"Loaded {len(docs)} docs from {full_path}")
-                for doc in docs:
-                    print("→", doc.page_content[:200])  # Show sample content
                 all_docs.extend(docs)
 
-    print(f"📄 Loaded {len(all_docs)} documents from PDF files.")
+    print(f"📄 Loaded {len(all_docs)} documents from all PDF files.")
 
     # 2. Split into chunks
     splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=64)
