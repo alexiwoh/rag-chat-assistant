@@ -8,8 +8,8 @@ from ..constants.paths import DOCUMENTS_DEFAULT_DIRECTORY, CHROMA_DB_DEFAULT_DIR
 
 
 def embed_documents(
-    root_dir=DOCUMENTS_DEFAULT_DIRECTORY,
-    persist_directory=CHROMA_DB_DEFAULT_DIRECTORY
+        root_dir=DOCUMENTS_DEFAULT_DIRECTORY,
+        persist_directory=CHROMA_DB_DEFAULT_DIRECTORY
 ):
     """
         Loads all PDF files from a directory (recursively), splits their text into chunks,
@@ -39,11 +39,16 @@ def embed_documents(
     print(f"📄 Loaded {len(all_docs)} documents from all PDF files.")
 
     # 2. Split into chunks
-    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=64)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1024,
+        chunk_overlap=256,
+        separators=["\n\n", "\n", ".", " ", ""]
+        # splitter tries preserving paragraphs, then lines, then sentences, then words, then characters
+    )
     split_docs = splitter.split_documents(all_docs)
     print(f"✂️ Split into {len(split_docs)} text chunks.")
 
-    # 3. Embed & store
+    # 3. Embed & make vector db store
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vectordb = Chroma.from_documents(
         documents=split_docs,
@@ -51,7 +56,6 @@ def embed_documents(
         persist_directory=persist_directory
     )
 
-    vectordb.persist()
     print(f"✅ Vector store created at: {persist_directory}")
     return vectordb
 

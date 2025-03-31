@@ -3,7 +3,9 @@ from fastapi.requests import Request
 from langchain.chains import RetrievalQA
 from starlette.concurrency import run_in_threadpool
 
+from .cache import get_cached_answer, set_cached_answer
 from .utils import sanitize_text
+from ..constants import MAX_INPUT_LENGTH
 
 templates = Jinja2Templates(directory="templates")
 chat_history = []
@@ -27,10 +29,15 @@ async def safe_run_qa(query: str, qa_chain: RetrievalQA) -> dict:
 
     query_clean = sanitize_text(query)
 
-    if len(query_clean) > 2000:
-        raise ValueError("⚠️ Query too long. Please limit to 2000 characters.")
+    if len(query_clean) > MAX_INPUT_LENGTH:
+        raise ValueError(f"⚠️ Query too long. Please limit to {MAX_INPUT_LENGTH} characters.")
 
-    result = await run_in_threadpool(qa_chain.invoke, query_clean)
+    cached_result = get_cached_answer(query_clean)
+    if cached_result:
+        result = cached_result
+    else:
+        result = await run_in_threadpool(qa_chain.invoke, query_clean)
+        set_cached_answer(query_clean, result)
 
     answer = result["result"]
     sources = list(set(doc.metadata.get("source", "unknown") for doc in result["source_documents"]))

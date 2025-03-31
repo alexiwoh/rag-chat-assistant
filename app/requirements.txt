@@ -1,3 +1,4 @@
+cachetools
 chromadb                # Using Chroma as vector store
 fastapi                 # Web framework
 jinja2                  # HTML templating
