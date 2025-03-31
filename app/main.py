@@ -2,18 +2,19 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from langchain.chains.llm import LLMChain
 
 from langchain_ollama import OllamaLLM
 from langchain.chains import RetrievalQA
 
-from embed_documents import embed_documents
+from PdfBot.helpers import embed_documents
+from PdfBot.constants import PROMPT_TEMPLATE_PDF_QA
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 db = embed_documents()
-
 retriever = db.as_retriever()
 
 llm = OllamaLLM(
@@ -30,7 +31,11 @@ llm = OllamaLLM(
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=retriever,
-    return_source_documents=True
+    return_source_documents=True,
+    chain_type="stuff",  # concatenate context docs
+    chain_type_kwargs={
+        "prompt": PROMPT_TEMPLATE_PDF_QA
+    }
 )
 
 chat_history = []

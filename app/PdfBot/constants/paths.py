@@ -1,0 +1,2 @@
+DOCUMENTS_DEFAULT_DIRECTORY = "documents"
+CHROMA_DB_DEFAULT_DIRECTORY = "databases/chroma_db"
