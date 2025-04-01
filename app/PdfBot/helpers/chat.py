@@ -4,17 +4,21 @@ from langchain.chains import RetrievalQA
 
 from .cache import get_or_cache_qa_result
 from .utils import sanitize_text, build_source_strings, validate_and_sanitize_query
+from ..constants.paths import TEMPLATES_DIR
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 chat_history = []
 
 
 def get_chat_ui(request: Request, error: str = None):
-    return templates.TemplateResponse("chat.html", {
-        "request": request,
-        "chat_history": chat_history,
-        "error": sanitize_text(error) if error else None
-    })
+    return templates.TemplateResponse(
+        request,
+        "chat.html",
+        {
+            "chat_history": chat_history,
+            "error": sanitize_text(error) if error else None
+        }
+    )
 
 
 async def safe_run_qa(query: str, qa_chain: RetrievalQA) -> dict:

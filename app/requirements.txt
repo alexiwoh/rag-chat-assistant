@@ -10,5 +10,6 @@ numpy<2.0
 ollama                          # Python client to talk to the Ollama server
 pdfminer.six                    # Used internally by PyMuPDF or other PDF tooling
 pymupdf                         # For PyMuPDFLoader (PDF loader)
+pytest
 python-multipart                # Needed for `Form(...)` in FastAPI
 uvicorn                         # ASGI server
