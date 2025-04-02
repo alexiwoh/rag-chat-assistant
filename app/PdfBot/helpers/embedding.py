@@ -213,16 +213,6 @@ def load_vector_store() -> BaseRetriever:
         search_kwargs={"k": NUMBER_TOP_SOURCES}
     )
 
-    # MMR retriever: adds diversity
-    mmr_retriever = db.as_retriever(
-        search_type="mmr",
-        search_kwargs={
-            "k": NUMBER_TOP_SOURCES,
-            "fetch_k": NUMBER_TOP_SOURCES * 4,
-            "lambda_mult": 0.8
-        }
-    )
-
     # Sparse keyword matching retriever (BM25)
     raw_docs = find_all_pdfs(DOCUMENTS_DEFAULT_DIRECTORY)
     bm25_retriever = BM25Retriever.from_documents(raw_docs)
@@ -230,8 +220,8 @@ def load_vector_store() -> BaseRetriever:
 
     # Combine them using weighted ensemble
     hybrid_retriever = EnsembleRetriever(
-        retrievers=[bm25_retriever, similarity_retriever, mmr_retriever],
-        weights=[0.4, 0.4, 0.2]
+        retrievers=[bm25_retriever, similarity_retriever],
+        weights=[0.5, 0.5]
     )
 
     return hybrid_retriever
