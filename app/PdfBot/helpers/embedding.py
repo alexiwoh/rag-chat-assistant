@@ -5,6 +5,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from PyPDF2 import PdfReader
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
+from langchain_core.retrievers import BaseRetriever
 
 from ..constants import NUMBER_TOP_SOURCES, EMBEDDING_MODEL
 from ..constants.paths import DOCUMENTS_DEFAULT_DIRECTORY, CHROMA_DB_DEFAULT_DIRECTORY
@@ -194,7 +197,7 @@ def get_vector_store(force_rebuild: bool = False) -> Chroma:
     return vector_db
 
 
-def load_vector_store():
+def load_vector_store() -> BaseRetriever:
     """
     Returns a retriever object using hybrid MMR-based similarity search
     with a balanced trade-off between relevance and diversity.
@@ -203,12 +206,32 @@ def load_vector_store():
         BaseRetriever: A configured LangChain retriever for querying the vector store.
     """
     db = get_vector_store()
-    retriever = db.as_retriever(
-        search_type="mmr",  # Maximal Marginal Relevance
+
+    # Semantic retriever: pure vector similarity
+    similarity_retriever = db.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": NUMBER_TOP_SOURCES}
+    )
+
+    # MMR retriever: adds diversity
+    mmr_retriever = db.as_retriever(
+        search_type="mmr",
         search_kwargs={
             "k": NUMBER_TOP_SOURCES,
             "fetch_k": NUMBER_TOP_SOURCES * 4,
-            "lambda_mult": 0.5  # balances relevance vs diversity
+            "lambda_mult": 0.8
         }
     )
-    return retriever
+
+    # Sparse keyword matching retriever (BM25)
+    raw_docs = find_all_pdfs(DOCUMENTS_DEFAULT_DIRECTORY)
+    bm25_retriever = BM25Retriever.from_documents(raw_docs)
+    bm25_retriever.k = NUMBER_TOP_SOURCES
+
+    # Combine them using weighted ensemble
+    hybrid_retriever = EnsembleRetriever(
+        retrievers=[bm25_retriever, similarity_retriever, mmr_retriever],
+        weights=[0.4, 0.4, 0.2]
+    )
+
+    return hybrid_retriever

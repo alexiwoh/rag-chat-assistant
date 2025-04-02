@@ -81,7 +81,7 @@ def build_source_strings(source_documents: List[Any]) -> List[str]:
             source_to_pages[source].add(page)
 
     # Sort by the source name and limit
-    top_sources = sorted(source_to_pages.items())[:NUMBER_OF_SOURCES_DISPLAY]
+    top_sources = list(source_to_pages.items())[:NUMBER_OF_SOURCES_DISPLAY]
 
     result = []
     for source, pages in top_sources:

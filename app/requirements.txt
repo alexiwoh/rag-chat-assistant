@@ -1,5 +1,6 @@
+rank_bm25                       # Sparse vector
 cachetools                      # For LRU cache
-chromadb==0.4.24                # Using Chroma as vector store
+chromadb==0.4.24                # Using Chroma as main vector store
 fastapi                         # Web framework
 jinja2                          # HTML templating
 langchain>=0.1.6                # Core LangChain framework

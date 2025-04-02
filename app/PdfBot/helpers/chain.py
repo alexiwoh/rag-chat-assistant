@@ -1,11 +1,12 @@
 from langchain.chains import RetrievalQA
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from ..constants import PROMPT_TEMPLATE_PDF_QA
 
 
-def build_qa_chain(llm: BaseLanguageModel, retriever: VectorStoreRetriever) -> RetrievalQA:
+def build_qa_chain(llm: BaseLanguageModel, retriever: BaseRetriever) -> RetrievalQA:
     """
     Builds a RetrievalQA chain using the provided language model and retriever.
 
