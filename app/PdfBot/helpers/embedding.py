@@ -1,18 +1,25 @@
 import os
+from typing import List
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 
-from ..constants import NUMBER_TOP_SOURCES
+from ..constants import NUMBER_TOP_SOURCES, EMBEDDING_MODEL
 from ..constants.paths import DOCUMENTS_DEFAULT_DIRECTORY, CHROMA_DB_DEFAULT_DIRECTORY
 
 
-def find_all_pdfs(root_dir: str):
+def find_all_pdfs(root_dir: str) -> List[Document]:
     """
     Recursively finds all PDFs in a directory and loads them as LangChain documents.
-    Adds source name and page metadata for attribution.
+    Adds page number and extracted PDF metadata (title, author, etc.) to each document.
+
+    Args:
+        root_dir (str): Root folder to recursively search for PDF files.
+
+    Returns:
+        List[Document]: A list of documents with enriched metadata from all found PDFs.
     """
     all_docs = []
 
@@ -36,6 +43,7 @@ def find_all_pdfs(root_dir: str):
                     doc.metadata["source"] = os.path.basename(doc.metadata.get("source", full_path))
                     doc.metadata["page"] = doc.metadata.get("page", None)
 
+                    # Add cleaned and stringified metadata fields
                     doc.metadata["title"] = str(metadata.get("/Title", ""))
                     doc.metadata["author"] = str(metadata.get("/Author", ""))
                     doc.metadata["subject"] = str(metadata.get("/Subject", ""))
@@ -49,9 +57,40 @@ def find_all_pdfs(root_dir: str):
     return all_docs
 
 
-def split_documents(documents, chunk_size=1024, chunk_overlap=256):
+def inject_metadata(doc: Document) -> str:
+    """
+    Appends select metadata fields into the content of the document
+    to give the language model extra reasoning context during retrieval.
+
+    Args:
+        doc (Document): A LangChain Document object with metadata.
+
+    Returns:
+        str: The document's text prefixed with selected metadata.
+    """
+    metadata = doc.metadata
+    metadata_lines = []
+    if metadata.get("title"):
+        metadata_lines.append(f"Title: {metadata['title']}")
+    if metadata.get("author"):
+        metadata_lines.append(f"Author: {metadata['author']}")
+    if metadata.get("subject"):
+        metadata_lines.append(f"Subject: {metadata['subject']}")
+    return "\n".join(metadata_lines + [doc.page_content])
+
+
+def split_documents(documents: List[Document], chunk_size: int = 1024, chunk_overlap: int = 256) -> List[Document]:
     """
     Splits documents into overlapping chunks using recursive character splitting.
+    Injects metadata directly into the page content for better context.
+
+    Args:
+        documents (List[Document]): A list of documents to split.
+        chunk_size (int): Size of each chunk in characters.
+        chunk_overlap (int): Number of overlapping characters between chunks.
+
+    Returns:
+        List[Document]: List of chunked documents with metadata injected into their text.
     """
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
@@ -61,39 +100,109 @@ def split_documents(documents, chunk_size=1024, chunk_overlap=256):
     )
     chunks = splitter.split_documents(documents)
     print(f"✂️ Split into {len(chunks)} text chunks.")
-    return chunks
+
+    docs_with_metadata = [
+        Document(page_content=inject_metadata(doc), metadata=doc.metadata)
+        for doc in chunks
+    ]
+
+    return docs_with_metadata
 
 
-def embed_and_store_documents(split_docs, persist_directory):
+def embed_and_store_documents(split_docs: List[Document], persist_directory: str) -> Chroma:
     """
     Embeds document chunks using a HuggingFace model and stores them in a Chroma vector DB.
+
+    Args:
+        split_docs (List[Document]): Chunked and metadata-injected documents to embed.
+        persist_directory (str): Path to the Chroma DB persistence directory.
+
+    Returns:
+        Chroma: Initialized Chroma vector store with embedded documents.
     """
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = Chroma.from_documents(
+    vector_db = Chroma.from_documents(
         documents=split_docs,
-        embedding=embeddings,
+        embedding=EMBEDDING_MODEL,
         persist_directory=persist_directory
     )
     print(f"🧠 Vector store created at: {persist_directory}")
-    return vectordb
+    return vector_db
 
 
 def embed_documents(
-    root_dir=DOCUMENTS_DEFAULT_DIRECTORY,
-    persist_directory=CHROMA_DB_DEFAULT_DIRECTORY
-):
+    root_dir: str = DOCUMENTS_DEFAULT_DIRECTORY,
+    persist_directory: str = CHROMA_DB_DEFAULT_DIRECTORY
+) -> Chroma:
     """
     Full pipeline to load, split, embed, and persist documents into a vector store.
+
+    Args:
+        root_dir (str): Root directory containing PDFs.
+        persist_directory (str): Where to save the Chroma vector DB.
+
+    Returns:
+        Chroma: The resulting vector database.
     """
     raw_docs = find_all_pdfs(root_dir)
     split_docs = split_documents(raw_docs)
-    vectordb = embed_and_store_documents(split_docs, persist_directory)
-    return vectordb
+    vector_db = embed_and_store_documents(split_docs, persist_directory)
+    return vector_db
+
+
+def is_chroma_db_valid(path: str) -> bool:
+    """
+    Checks whether a Chroma vector DB already exists at the given path,
+    including nested folders.
+
+    Args:
+        path (str): Path to check for Chroma DB files.
+
+    Returns:
+        bool: True if DB exists and contains data, else False.
+    """
+    print(f"🔎 Checking for database in {path}...")
+    if not os.path.exists(path):
+        return False
+
+    for root, _, files in os.walk(path):
+        for file in files:
+            if file.endswith(".bin") or file.endswith(".pkl") or file.endswith(".parquet") or file.endswith(".sqlite3"):
+                return True
+
+    return False
+
+
+def get_vector_store(force_rebuild: bool = False) -> Chroma:
+    """
+    Loads an existing Chroma vector DB if available, otherwise rebuilds it from documents.
+
+    Args:
+        force_rebuild (bool): Whether to forcefully rebuild the DB from scratch.
+
+    Returns:
+        Chroma: A Chroma vector DB, either loaded or freshly built.
+    """
+    if not force_rebuild and is_chroma_db_valid(CHROMA_DB_DEFAULT_DIRECTORY):
+        print("🔁 Loading existing vector store...")
+        vector_db = Chroma(
+            persist_directory=CHROMA_DB_DEFAULT_DIRECTORY,
+            embedding_function=EMBEDDING_MODEL
+        )
+    else:
+        print("🆕 No existing vector store found. Rebuilding from documents...")
+        vector_db = embed_documents()
+    return vector_db
 
 
 def load_vector_store():
-    db = embed_documents()
-    # Hybrid similarity search
+    """
+    Returns a retriever object using hybrid MMR-based similarity search
+    with a balanced trade-off between relevance and diversity.
+
+    Returns:
+        BaseRetriever: A configured LangChain retriever for querying the vector store.
+    """
+    db = get_vector_store()
     retriever = db.as_retriever(
         search_type="mmr",  # Maximal Marginal Relevance
         search_kwargs={

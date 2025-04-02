@@ -4,6 +4,7 @@ fastapi                         # Web framework
 jinja2                          # HTML templating
 langchain>=0.1.6                # Core LangChain framework
 langchain-community>=0.0.24     # Includes PyMuPDFLoader, etc.
+langchain-chroma
 langchain-huggingface           # For HuggingFaceEmbeddings (recently split out)
 langchain-ollama>=0.1.0         # The modern Ollama integration
 numpy<2.0

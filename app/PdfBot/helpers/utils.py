@@ -1,12 +1,25 @@
 import html
 import re
 from collections import defaultdict
+from typing import List, Any
 
 from ..constants import MAX_INPUT_LENGTH, NUMBER_OF_SOURCES_DISPLAY
 
 
 def sanitize_text(text: str) -> str:
-    """Sanitize user input or model output to prevent injection attacks or XSS."""
+    """
+    Sanitize user input or model output to prevent injection attacks or XSS.
+
+    - Escapes HTML characters to avoid script injection.
+    - Filters common SQL keywords to reduce risk of SQL injection.
+    - Trims and normalizes whitespace.
+
+    Args:
+        text (str): The raw text to sanitize.
+
+    Returns:
+        str: A cleaned and safe string.
+    """
     if not text:
         return ""
 
@@ -24,6 +37,18 @@ def sanitize_text(text: str) -> str:
 
 
 def validate_and_sanitize_query(raw_query: str) -> str:
+    """
+    Clean a user query and enforce input constraints (e.g. length, emptiness).
+
+    Args:
+        raw_query (str): User-entered question or statement.
+
+    Raises:
+        ValueError: If the query is empty or exceeds length limits.
+
+    Returns:
+        str: The validated and cleaned query.
+    """
     query = sanitize_text(raw_query)
 
     if not query.strip():
@@ -34,7 +59,19 @@ def validate_and_sanitize_query(raw_query: str) -> str:
     return query
 
 
-def build_source_strings(source_documents) -> list[str]:
+def build_source_strings(source_documents: List[Any]) -> List[str]:
+    """
+    Builds a compact list of source strings grouped by document and page number.
+
+    For example:
+        ["Source A (pages 3, 5, 9)", "Source B (pages 1, 4)"]
+
+    Args:
+        source_documents (List[Any]): List of LangChain Document objects with metadata.
+
+    Returns:
+        List[str]: A list of formatted source strings (max NUMBER_OF_SOURCES_DISPLAY).
+    """
     source_to_pages = defaultdict(set)
 
     for doc in source_documents:
