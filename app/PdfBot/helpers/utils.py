@@ -1,7 +1,8 @@
 import html
 import re
+from collections import defaultdict
 
-from ..constants import MAX_INPUT_LENGTH
+from ..constants import MAX_INPUT_LENGTH, NUMBER_OF_SOURCES_DISPLAY
 
 
 def sanitize_text(text: str) -> str:
@@ -34,19 +35,23 @@ def validate_and_sanitize_query(raw_query: str) -> str:
 
 
 def build_source_strings(source_documents) -> list[str]:
-    sources = set()
+    source_to_pages = defaultdict(set)
 
     for doc in source_documents:
-        source_name = doc.metadata.get("source", "unknown")
+        source = doc.metadata.get("source", "unknown")
         page = doc.metadata.get("page")
-        score = doc.metadata.get("score")
-
-        display = f"{source_name}"
         if page is not None:
-            display += f" (page {page})"
-        if score is not None:
-            display += f" — confidence: {round(score, 2)}"
+            source_to_pages[source].add(page)
 
-        sources.add(display)
+    # Sort by the source name and limit
+    top_sources = sorted(source_to_pages.items())[:NUMBER_OF_SOURCES_DISPLAY]
 
-    return list(sorted(sources))
+    result = []
+    for source, pages in top_sources:
+        if pages:
+            page_list = sorted(pages)
+            result.append(f"{source} (pages {', '.join(map(str, page_list))})")
+        else:
+            result.append(source)
+
+    return result
