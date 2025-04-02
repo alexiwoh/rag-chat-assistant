@@ -199,7 +199,7 @@ def get_vector_store(force_rebuild: bool = False) -> Chroma:
 
 def load_vector_store() -> BaseRetriever:
     """
-    Returns a retriever object using hybrid MMR-based similarity search
+    Returns a retriever object using hybrid similarity search
     with a balanced trade-off between relevance and diversity.
 
     Returns:
