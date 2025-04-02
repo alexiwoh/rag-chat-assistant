@@ -11,7 +11,7 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 
 - 🧠 **LLM-powered RAG pipeline** built with LangChain and locally hosted via Ollama (no paid APIs)
 - 📄 **PDF ingestion, metadata extraction, chunking, and embedding** using HuggingFace + ChromaDB
-- 🔍 **Hybrid retrieval** with Maximal Marginal Relevance (MMR) for combining vector and keyword search
+- 🔍 **Hybrid retrieval** for combining vector and keyword search
 - ⚙️ **Prompt engineering** with few-shot reasoning, hallucination prevention, and context formatting
 - 🔗 **Source attribution** with grouped page numbers per document
 - 🔁 **Response caching** using `LRUCache` to speed up repeated queries
@@ -40,7 +40,7 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 git clone https://github.com/alexiwoh/rag-chat-assistant.git
 ```
 
-## 💻 Requirements
+### 2. 💻 Requirements
 
 Before running the app, make sure you have the following installed:
 
@@ -83,4 +83,21 @@ To force a rebuild of the Docker image, delete the current vector database, and 
 
 ```bash
 ./clean-app --rebuild
+```
+
+## 📥 Updating Documents
+
+To add new knowledge to the system:
+
+1. Drop your PDF files into the `app/documents/` folder. You can also organize them in subfolders if needed.
+2. Delete the current database:
+   
+```bash
+./clean-app --rebuild
+```
+
+3. The system will automatically reprocess all documents and rebuild the vector store the next time you launch the app:
+
+```bash
+./start-app
 ```
