@@ -3,6 +3,8 @@ from fastapi.requests import Request
 from langchain.chains import RetrievalQA
 from typing import Optional
 
+from starlette.responses import JSONResponse
+
 from .cache import get_or_cache_qa_result
 from .utils import sanitize_text, build_source_strings, validate_and_sanitize_query
 from ..constants.paths import TEMPLATES_DIR
@@ -11,24 +13,30 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 chat_history = []
 
 
-def get_chat_ui(request: Request, error: Optional[str] = None):
+def render_chat_response(request: Request, error: Optional[str] = None):
     """
-    Renders the chat UI template with chat history and optional error message.
+    Returns either a rendered HTML page or JSON response based on `?json=true`.
 
     Args:
-        request (Request): The incoming FastAPI request.
-        error (Optional[str]): Optional error message to show in the UI.
+        request (Request): Incoming FastAPI request.
+        error (Optional[str]): Optional error message.
 
     Returns:
-        TemplateResponse: Rendered HTML page with chat history and errors (if any).
+        Union[TemplateResponse, JSONResponse]: HTML or JSON output.
     """
+    error_sanitized = sanitize_text(error) if error else None
+    response_payload = {
+        "chat_history": chat_history,
+        "error": error_sanitized
+    }
+
+    if request.query_params.get("json") == "true":
+        return JSONResponse(content=response_payload)
+
     return templates.TemplateResponse(
         request,
         "chat.html",
-        {
-            "chat_history": chat_history,
-            "error": sanitize_text(error) if error else None
-        }
+        response_payload
     )
 
 
@@ -61,6 +69,7 @@ async def safe_run_qa(query: str, qa_chain: RetrievalQA) -> dict:
 async def process_chat_request(query: str, qa_chain: RetrievalQA, request: Request):
     """
     Handles a full chat request: runs QA, updates chat history, and renders output.
+    Returns either a rendered HTML page or JSON response based on `?json=true`.
 
     Args:
         query (str): User query string.
@@ -68,7 +77,7 @@ async def process_chat_request(query: str, qa_chain: RetrievalQA, request: Reque
         request (Request): Incoming FastAPI request object.
 
     Returns:
-        TemplateResponse: The rendered chat UI with updated history or error.
+        Union[TemplateResponse, JSONResponse]: HTML or JSON output.
     """
     try:
         result = await safe_run_qa(query, qa_chain)
@@ -79,8 +88,8 @@ async def process_chat_request(query: str, qa_chain: RetrievalQA, request: Reque
             "sources": result["sources"]
         })
 
-        return get_chat_ui(request)
+        return render_chat_response(request)
 
     except Exception as e:
         print(f"❌ Error during QA inference: {e}")
-        return get_chat_ui(request, error=str(e))
+        return render_chat_response(request, error=str(e))
