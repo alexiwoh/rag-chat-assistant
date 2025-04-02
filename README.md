@@ -9,12 +9,15 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 
 ## 🚀 Features
 
-- 🧠 LLM-powered agent using LangChain
-- 📄 PDF ingestion, chunking, and embedding
-- 🔍 Semantic search with ChromaDB
-- 🌐 Web-based UI to chat with your knowledge base
-- 🐳 Fully containerized with Docker
-- ⚡️ One-liner startup via shell script
+- 🧠 **LLM-powered RAG pipeline** built with LangChain and locally hosted via Ollama (no paid APIs)
+- 📄 **PDF ingestion, metadata extraction, chunking, and embedding** using HuggingFace + ChromaDB
+- 🔍 **Hybrid retrieval** with Maximal Marginal Relevance (MMR) for combining vector and keyword search
+- ⚙️ **Prompt engineering** with few-shot reasoning, hallucination prevention, and context formatting
+- 🔗 **Source attribution** with grouped page numbers per document
+- 🔁 **Response caching** using `LRUCache` to speed up repeated queries
+- 🌐 **Web-based UI** built with FastAPI + Jinja2 to interact with your document knowledge base in the **app/documents/** folder
+- 🐳 **Fully containerized** with Docker for cross-platform deployment
+- 🧪 **CI pipeline** via GitHub Actions, running `pytest` on every commit
 
 ---
 
@@ -28,6 +31,14 @@ Built with **FastAPI**, **LangChain**, and **ChromaDB** to parse, embed, index, 
 - [Docker + Compose](https://docs.docker.com/compose/)
 
 ---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/alexiwoh/rag-chat-assistant.git
+```
 
 ## 💻 Requirements
 
@@ -66,4 +77,10 @@ Run the following in the Terminal:
 
 ```bash
 ./clean-app
+```
+
+To force a rebuild of the Docker image, delete the current vector database, and regenerate the vector store on the next project run, use:
+
+```bash
+./clean-app --rebuild
 ```
