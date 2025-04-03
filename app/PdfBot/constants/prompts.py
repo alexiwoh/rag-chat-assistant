@@ -12,6 +12,7 @@ Please follow these rules strictly:
 - If the answer is not in the context, reply exactly: "I don't know based on the given information." Do not elaborate on that answer.
 - If multiple interpretations exist, list them clearly and concisely.
 - Do NOT repeat the question or restate the context.
+- Clearly explain your reasoning if the question involves complex or multi-step thinking.
 
 ---
 
@@ -24,7 +25,7 @@ Q: Where is Wakanda?
 A: I don't know based on the given information.
 
 Q: What are the benefits of the policy?
-A: Increased access and reduced costs.
+A: Let's think step by step. The context mentions increased access, then it notes reduced costs. So, the benefits are increased access and reduced costs.
 
 ---
 
